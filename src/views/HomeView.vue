@@ -6,34 +6,51 @@ import { ElMessage } from 'element-plus';
 import { container } from 'tsyringe';
 import TripRepository from '@/repository/TripRepository';
 import TripComponent from '@/components/TripComponent.vue';
+import Paging from '@/entity/data/Paging';
+import type Trip from '@/entity/trip/Trip';
 
 const router = useRouter();
 
 const TRIP_REPOSITORY = container.resolve(TripRepository);
 
+type stateType = {
+  tripList: Paging<Trip>;
+};
+
 const state = reactive({
-  tripList: [],
+  tripList: new Paging<Trip>(),
 });
 
-function getList() {
-  TRIP_REPOSITORY.getList().then((tripList) => {
+function getList(page: number) {
+  TRIP_REPOSITORY.getList(page).then((tripList) => {
     state.tripList = tripList;
   });
 }
 
 onMounted(() => {
-  getList();
+  getList(0);
+  console.log(state.tripList);
 });
 </script>
 
 <template>
   <div class="content">
-
+    <span class="totalCount"> 총 게시글 수{{ state.tripList.totalCount }}</span>
     <ul class="trips">
-      <li v-for="trip in state.tripList" :key="trip.id">
+      <li v-for="trip in state.tripList.items" :key="trip.id">
         <TripComponent :trip="trip" />
       </li>
     </ul>
+    <div class="d-flex justify-content-center">
+      <el-pagination
+        :background="true"
+        v-model:current-page="state.tripList.page"
+        layout="prev, pager, next"
+        :total="state.tripList.totalCount"
+        :page-size="3"
+        @current-change="(page) => getList(page)"
+      />
+    </div>
   </div>
 </template>
 

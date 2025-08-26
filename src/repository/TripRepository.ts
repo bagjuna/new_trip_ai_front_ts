@@ -4,6 +4,7 @@ import { inject, singleton } from 'tsyringe';
 import type TripWrite from '@/entity/trip/TripWrite';
 import { plainToInstance } from 'class-transformer';
 import Trip from '@/entity/trip/Trip';
+import Paging from '@/entity/data/Paging';
 
 @singleton()
 export default class TripRepository {
@@ -28,13 +29,16 @@ export default class TripRepository {
       });
   }
 
-  public getList() {
+  public getList(page: number): Promise<Paging<Trip>> {
     return this.httpRepository
       .get({
-        path: '/api/trips?page=1&size=3',
+        path: `/api/trips?page=${page}&size=3`,
       })
       .then((response) => {
-        return plainToInstance(Trip, response);
+        const paging = plainToInstance<Paging<Trip>, any>(Paging, response);
+        const items = plainToInstance<Trip, any[]>(Trip, response.items);
+        paging.setItems(items);
+        return paging;
       });
   }
 }
